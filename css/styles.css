@@ -1,1 +1,1 @@
-*{box-sizing:border-box}#gameCanvas{border:1px solid #000;background-color:bisque}
+@import"https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap";*{box-sizing:border-box}#gameCanvas{background-color:#8acaff;border-radius:1rem;box-shadow:0 .5rem 3rem rgba(0,0,0,.25)}

@@ -1,13 +1,14 @@
 const JUMP_SPEED = 300;
 
 export class Player {
-    position;
-    velocity = 0;
-    height = 25;
-    width = 25;
 
-    constructor(position) {
-        this.position = position;
+    constructor(x, y, width, height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.velocity = 0;
+        
         this.init();
     }
 
