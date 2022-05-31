@@ -1,10 +1,13 @@
-export class Player {
-    position = 200;
-    velocity = 0;
-    height = 50;
-    width = 50;
+const JUMP_SPEED = 300;
 
-    constructor() {
+export class Player {
+    position;
+    velocity = 0;
+    height = 25;
+    width = 25;
+
+    constructor(position) {
+        this.position = position;
         this.init();
     }
 
@@ -14,9 +17,15 @@ export class Player {
                 this.jump();
             }
         });
+        document.addEventListener('touchstart', (e) => {
+            this.jump();
+        });
+        document.addEventListener('mousedown', (e) => {
+            this.jump();
+        });
     }
 
     jump() {
-        this.position -= 10;
+        this.velocity = -JUMP_SPEED;
     }
 }
