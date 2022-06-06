@@ -1,6 +1,7 @@
 export class Pipe {
-    constructor(x, isBottomPipe, height) {
+    constructor(x, y, isBottomPipe, height) {
         this.x = x;
+        this.y = y;
         this.isBottomPipe = isBottomPipe;
         this.height = height;
     }

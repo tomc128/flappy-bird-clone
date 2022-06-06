@@ -43,6 +43,9 @@ export class Game {
                     this.start();
                 }
             }
+            else if (e.key == 'p') {
+                this.isPaused = !this.isPaused;
+            }
         });
         document.addEventListener('touchstart', (e) => {
             if (this.state == 'notStarted') {
@@ -65,8 +68,12 @@ export class Game {
         let now = Date.now();
         let deltaTime = (now - this.lastRender) / 1000; // ms->s
 
-        this.update(deltaTime);
-        this.draw();
+        if (!this.isPaused) {
+            this.update(deltaTime);
+            this.draw();
+
+            this.debugDraw();
+        }
 
         this.lastRender = now;
         requestAnimationFrame(this.loop.bind(this));
@@ -84,7 +91,7 @@ export class Game {
             }
 
             // Score increase
-            if (PLAYER_X + PLAYER_WIDTH / 2 > this.pipes[0].x - PIPE_WIDTH / 2  && PLAYER_X - PLAYER_WIDTH / 2 < this.pipes[0].x + PIPE_WIDTH / 2) {
+            if (PLAYER_X + PLAYER_WIDTH / 2 > this.pipes[0].x - PIPE_WIDTH / 2 && PLAYER_X - PLAYER_WIDTH / 2 < this.pipes[0].x + PIPE_WIDTH / 2) {
                 console.log('inside pipe area');
                 if (Date.now() - this.lastScoreIncrease > SCORE_INCREASE_COOLDOWN_MS) {
                     this.score++;
@@ -141,7 +148,7 @@ export class Game {
         // Player
         this.context.fillStyle = '#0095DD';
         // this.context.fillRect(PLAYER_X, this.player.y, this.player.width, this.player.height);
-        
+
         this.context.beginPath();
         this.context.arc(PLAYER_X + PLAYER_WIDTH / 2, this.player.y + PLAYER_HEIGHT / 2, PLAYER_WIDTH / 2, 0, 2 * Math.PI);
         this.context.fill();
@@ -153,7 +160,7 @@ export class Game {
 
         // Pipes
         if (this.state == 'started') {
-            this.context.fillStyle = '#00DD60';
+            this.context.fillStyle = '#000';
             for (const pipe of this.pipes) {
                 this.context.fillRect(pipe.x, pipe.isBottomPipe ? this.canvas.height - pipe.height : 0, PIPE_WIDTH, pipe.height);
             }
@@ -179,6 +186,49 @@ export class Game {
         }
     }
 
+    debugDraw() {
+        // Player bounding box
+        this.context.strokeStyle = '#ff0000';
+        this.context.strokeRect(PLAYER_X, this.player.y, PLAYER_WIDTH, PLAYER_HEIGHT);
+
+        // Pipes bounding boxes
+        for (const pipe of this.pipes) {
+            let pipeLeft = pipe.x;
+            let pipeRight = pipe.x + PIPE_WIDTH;
+            let pipeEnd = pipe.isBottomPipe ? this.canvas.height - pipe.height : pipe.height;
+
+            this.context.strokeStyle = '#ff0000';
+            this.context.lineWidth = 5;
+            this.context.beginPath();
+            this.context.moveTo(pipeLeft, pipe.y);
+            this.context.lineTo(pipeLeft, pipe.y + pipe.height);
+            this.context.stroke();
+
+            this.context.strokeStyle = '#ff00ff';
+            this.context.beginPath();
+            this.context.moveTo(pipeRight, pipe.y);
+            this.context.lineTo(pipeRight, pipe.y + pipe.height);
+            this.context.stroke();
+
+            this.context.strokeStyle = '#00ffff';
+            this.context.beginPath();
+            this.context.moveTo(pipeLeft, pipeEnd);
+            this.context.lineTo(pipeRight, pipeEnd);
+            this.context.stroke();
+
+            // this.context.strokeStyle = '#ff0000';
+            // this.context.strokeRect(pipe.x, pipe.isBottomPipe ? this.canvas.height - pipe.height : 0, PIPE_WIDTH, pipe.height);
+        }
+
+        // Player status
+        // circle in the centre of the player - yellow = alive, red = colliding with pipe
+        this.context.beginPath();
+        this.context.arc(PLAYER_X + PLAYER_WIDTH / 2, this.player.y + PLAYER_HEIGHT / 2, PLAYER_WIDTH / 6, 0, 2 * Math.PI);
+        this.context.fillStyle = this.playerIsCollidingWithPipe() ? '#ff0000' : '#ffff00';
+        this.context.fill();
+
+    }
+
     generateAndAddPipePair(x) {
         let gap = Math.floor(Math.random() * (PIPE_GAP_RANGE[1] - PIPE_GAP_RANGE[0] + 1) + PIPE_GAP_RANGE[0]);
         let gapPosition = Math.floor(Math.random() * (PIPE_GAP_Y_RANGE[1] - PIPE_GAP_Y_RANGE[0] + 1) + PIPE_GAP_Y_RANGE[0]);
@@ -186,10 +236,31 @@ export class Game {
         let topHeight = gapPosition - gap / 2;
         let bottomHeight = this.canvas.height - gapPosition - gap / 2;
 
-        let topPipe = new Pipe(x, false, topHeight);
-        let bottomPipe = new Pipe(x, true, bottomHeight);
+        let topPipe = new Pipe(x, 0, false, topHeight);
+        let bottomPipe = new Pipe(x, this.canvas.height - bottomHeight, true, bottomHeight);
 
         this.pipes.push(topPipe, bottomPipe);
+    }
+
+    playerIsCollidingWithPipe() {
+        for (const pipe of this.pipes) {
+            let x = this.player.x;
+            let y = this.player.y;
+            let w = PLAYER_WIDTH;
+            let h = PLAYER_HEIGHT;
+            let px = pipe.x;
+            let py = pipe.y;
+            let pw = pipe.width;
+            let ph = pipe.height;
+
+            // Check if player is colliding with pipe
+            if (x + w > px && x < px + pw && y + h > py && y < py + ph) {
+                return true;
+            }
+        }
+        
+
+        return false;
     }
 
     end() {
