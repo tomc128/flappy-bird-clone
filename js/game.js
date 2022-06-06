@@ -11,7 +11,7 @@ const PLAYER_STARTING_Y = CANVAS_HEIGHT / 2;
 const PIPE_GAP_RANGE = [80, 180];
 const PIPE_GAP_Y_RANGE = [100, CANVAS_HEIGHT - 100];
 const PIPE_WIDTH = 50;
-const PIPE_SPACING_OFFSET_RANGE = [100, 300]
+const PIPE_SPACING = CANVAS_WIDTH / 2;
 const PIPE_BASE_MOVE_SPEED = 3;
 
 const SCORE_INCREASE_COOLDOWN_MS = 500;
@@ -38,13 +38,21 @@ export class Game {
         this.pipes = [];
 
         document.addEventListener('keydown', (e) => {
-            if (e.key == ' ') {
-                if (this.state == 'notStarted') {
-                    this.start();
-                }
-            }
-            else if (e.key == 'p') {
-                this.isPaused = !this.isPaused;
+            switch (e.key) {
+                case ' ':
+                    if (this.state == 'notStarted') {
+                        this.start();
+                    }
+                    break;
+
+                case 'p':
+                    this.isPaused = !this.isPaused;
+                    break;
+
+                case 'd':
+                    this.showDebugVisuals = !this.showDebugVisuals;
+                    break;
+
             }
         });
         document.addEventListener('touchstart', (e) => {
@@ -72,7 +80,9 @@ export class Game {
             this.update(deltaTime);
             this.draw();
 
-            this.debugDraw();
+            if (this.showDebugVisuals) {
+                this.debugDraw();
+            }
         }
 
         this.lastRender = now;
@@ -110,33 +120,13 @@ export class Game {
                 this.pipes.splice(this.pipes.indexOf(pipe), 1);
             }
             if (pipesToDelete.length > 0) {
-                let spacingOffset = Math.floor(Math.random() * (PIPE_SPACING_OFFSET_RANGE[1] - PIPE_SPACING_OFFSET_RANGE[0] + 1) + PIPE_SPACING_OFFSET_RANGE[0]);
-                this.generateAndAddPipePair(GENERATE_PIPES_AT_X + spacingOffset);
+                ;
+                this.generateAndAddPipePair(GENERATE_PIPES_AT_X + PIPE_SPACING);
             }
 
             // Check collision
-            if (this.player.y + this.player.height > this.canvas.height) {
+            if (this.playerIsCollidingWithPipe() || this.playerIsOutOfBounds()) {
                 this.end();
-            }
-            if (this.player.y < 0) {
-                this.end();
-            }
-
-            for (const pipe of this.pipes) {
-
-                let x = this.player.x;
-                let y = this.player.y;
-                let w = PLAYER_WIDTH;
-                let h = PLAYER_HEIGHT;
-                let px = pipe.x;
-                let py = pipe.y;
-                let pw = pipe.width;
-                let ph = pipe.height;
-
-                if (x + w > px && x < px + pw && y + h > py && y < py + ph) {
-                    this.end();
-                }
-
             }
         }
     }
@@ -147,7 +137,6 @@ export class Game {
 
         // Player
         this.context.fillStyle = '#0095DD';
-        // this.context.fillRect(PLAYER_X, this.player.y, this.player.width, this.player.height);
 
         this.context.beginPath();
         this.context.arc(PLAYER_X + PLAYER_WIDTH / 2, this.player.y + PLAYER_HEIGHT / 2, PLAYER_WIDTH / 2, 0, 2 * Math.PI);
@@ -188,6 +177,7 @@ export class Game {
 
     debugDraw() {
         // Player bounding box
+        this.context.lineWidth = 3;
         this.context.strokeStyle = '#ff0000';
         this.context.strokeRect(PLAYER_X, this.player.y, PLAYER_WIDTH, PLAYER_HEIGHT);
 
@@ -198,7 +188,6 @@ export class Game {
             let pipeEnd = pipe.isBottomPipe ? this.canvas.height - pipe.height : pipe.height;
 
             this.context.strokeStyle = '#ff0000';
-            this.context.lineWidth = 5;
             this.context.beginPath();
             this.context.moveTo(pipeLeft, pipe.y);
             this.context.lineTo(pipeLeft, pipe.y + pipe.height);
@@ -250,17 +239,19 @@ export class Game {
             let h = PLAYER_HEIGHT;
             let px = pipe.x;
             let py = pipe.y;
-            let pw = pipe.width;
+            let pw = PIPE_WIDTH;
             let ph = pipe.height;
 
-            // Check if player is colliding with pipe
             if (x + w > px && x < px + pw && y + h > py && y < py + ph) {
                 return true;
             }
         }
-        
 
         return false;
+    }
+
+    playerIsOutOfBounds() {
+        return this.player.y + this.player.height > this.canvas.height || this.player.y < 0;
     }
 
     end() {
